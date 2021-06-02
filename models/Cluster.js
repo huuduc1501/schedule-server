@@ -13,4 +13,8 @@ module.exports = (sequelize) =>
             allowNull: false,
             unique: true,
         },
+        beginDay: {
+            type:DataTypes.DATE,
+            allowNull:false,
+        }
     })

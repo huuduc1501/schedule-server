@@ -17,14 +17,6 @@ module.exports = (sequelize) =>
             type: DataTypes.STRING,
             allowNull: false,
         },
-        avatar: {
-            type: DataTypes.STRING,
-            defaultValue: ''
-        },
-        cover: {
-            type: DataTypes.STRING,
-            defaultValue: ''
-        },
         password: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -38,7 +30,8 @@ module.exports = (sequelize) =>
             }
         },
         role: {
-            type: DataTypes.ENUM('ADMIN', 'MANAGER', 'GV', 'HS'),
-            allowNull: false,
+            type: DataTypes.ENUM('ADMIN', 'MANAGER',),
+            allowNull: true,
+            default:'MANAGER'
         }
     })
