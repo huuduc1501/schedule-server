@@ -1,4 +1,4 @@
-const { User } = require('../configDb')
+const { User, Cluster } = require('../configDb')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -43,6 +43,12 @@ exports.login = asyncHandler(async (req, res, next) => {
     sendToken(res, user, 200)
 })
 exports.getMe = asyncHandler(async (req, res, next) => {
+    const clusterList = await Cluster.findAll({
+        Where: {
+            userId: req.user.id
+        }
+    })
+    req.user.setDataValue('clusterList', clusterList)
     res.status(200).json({ success: true, data: req.user })
 })
 
