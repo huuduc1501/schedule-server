@@ -18,7 +18,7 @@ module.exports = (sequelize) =>
             allowNull: false,
         },
         dayType: {
-            type: DataTypes.ENUM('ODD', 'EVEN', 'FULL'),
+            type: DataTypes.ENUM('odd', 'even', 'full'),
             allowNull: false,
         },
         beginDay: {
