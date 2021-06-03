@@ -46,7 +46,11 @@ exports.createRoom = asyncHandler(async (req, res, next) => {
 })
 
 exports.createClass = asyncHandler(async (req, res, next) => {
-    const classes = await Classes.create(req.body)
+    const rList = await Room.findAll({ where: { clusterId: req.params.clusterId } })
+    const { cr, r } = addClass(req.body, rList)
+    const c = await Classes.create(cr)
+    await c.save()
+    await Room.update({ r, where: { id: r.id } })
     // classes.beginDay = new Date(classes.beginDay)
     // classes.finishDay = new Date(classes.finishDay)
     await classes.save()
@@ -145,41 +149,7 @@ const setSchedule = ({ cluster, classroomList = [], roomList = [] }) => {
 const handler = (classroomList = [], roomList = []) => {
 
     //  with begin day add toggle learn day == finish day
-    const addDate = (date, number) => {
 
-        let d = new Date(date)
-        return new Date(d.setDate(d.getDate() + number))
-    }
-
-    // compute total day by learn day
-    const totalDay = (date, type, number) => {
-        let d = new Date(date)
-        let bonus = 1
-        if (type === 'odd' && d.getDay() % 2 === 1)
-            bonus += 1
-        if (type === 'even') {
-            if (d.getDay() === 6) {
-                bonus += 2
-            }
-            else {
-                if (d.getDay() % 2 === 0 && d.getDay() !== 0)
-                    bonus += 1
-            }
-        }
-
-        if (d.getDay() === 0)
-            bonus += 1
-        return type === 'full'
-            ? Math.floor(number / 6) * 7 + number % 6 + bonus
-            : Math.floor(number / 3) * 7 + (number % 3) * 2 + bonus
-    }
-    const compareDate = (day1, day2) => {
-        const d1 = new Date(day1)
-        const d2 = new Date(day2)
-        console.log(d1)
-        console.log(d2)
-        return d1.getTime() - d2.getTime()
-    }
 
     // handle attach room to class room
     classroomList.forEach(cr => {
@@ -209,4 +179,70 @@ const handler = (classroomList = [], roomList = []) => {
             choosen['full'] = cr.finishDay
         }
     })
+}
+
+const addClass = (cr, rList) => {
+
+    let choosen = {}
+    roomList.forEach(r => {
+
+        if (r.roomType === cr.roomType && r.maxPupils >= cr.numberOfPupils) {
+            if (Object.keys(choosen).length === 0) {
+                choosen = r
+            }
+            console.log(compareDate(r[cr.dayType], choosen[cr.dayType]))
+            if (compareDate(choosen[cr.dayType], r[cr.dayType]))
+                choosen = r
+        }
+    })
+    cr.beginDay = choosen[cr.dayType]
+    cr.finishDay = addDate(cr.beginDay, totalDay(cr.beginDay, cr.dayType, cr.learnDay)).toLocaleDateString()
+
+    cr.roomId = choosen.id
+
+    if (cr.dayType === 'full') {
+        choosen.full = cr.finishDay
+        choosen.even = cr.finishDay
+        choosen.odd = cr.finishDay
+    } else {
+        choosen[cr.dayType] = cr.finishDay
+        choosen['full'] = cr.finishDay
+    }
+    return { cr, choosen }
+}
+
+const addDate = (date, number) => {
+
+    let d = new Date(date)
+    return new Date(d.setDate(d.getDate() + number))
+}
+
+// compute total day by learn day
+const totalDay = (date, type, number) => {
+    let d = new Date(date)
+    let bonus = 1
+    if (type === 'odd' && d.getDay() % 2 === 1)
+        bonus += 1
+    if (type === 'even') {
+        if (d.getDay() === 6) {
+            bonus += 2
+        }
+        else {
+            if (d.getDay() % 2 === 0 && d.getDay() !== 0)
+                bonus += 1
+        }
+    }
+
+    if (d.getDay() === 0)
+        bonus += 1
+    return type === 'full'
+        ? Math.floor(number / 6) * 7 + number % 6 + bonus
+        : Math.floor(number / 3) * 7 + (number % 3) * 2 + bonus
+}
+const compareDate = (day1, day2) => {
+    const d1 = new Date(day1)
+    const d2 = new Date(day2)
+    console.log(d1)
+    console.log(d2)
+    return d1.getTime() - d2.getTime()
 }
