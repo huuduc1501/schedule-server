@@ -11,6 +11,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
     //         statusCode: 400,
     //     })
     // }
+    console.log(req.body)
     const user = await User.create(req.body)
     const salt = await bcrypt.genSalt(10)
     user.password = await bcrypt.hash(user.password, salt)
