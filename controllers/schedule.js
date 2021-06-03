@@ -1,8 +1,10 @@
 
 const { Op } = require('sequelize')
+const moment = require('moment')
 
 const { Classes, Room, User, Cluster } = require('../configDb')
 const asyncHandler = require('../middlewares/asyncHandler')
+
 
 exports.createCluster = asyncHandler(async (req, res, next) => {
     const { id: userId } = req.user
@@ -24,7 +26,7 @@ exports.createCluster = asyncHandler(async (req, res, next) => {
             crList.forEach(async cr => {
                 const tmpR = tmpRoom.find(e => e.name === cr.roomName)
 
-                console.log(tmpR.id)
+
                 const tmp = await Classes.create(cr)
                 tmp.roomId = tmpR.id
                 await tmp.save()
@@ -34,7 +36,7 @@ exports.createCluster = asyncHandler(async (req, res, next) => {
 
     })
 
-res.status(200).json({ success: true, data: cluster })
+    res.status(200).json({ success: true, data: cluster })
 })
 
 exports.createRoom = asyncHandler(async (req, res, next) => {
@@ -56,15 +58,14 @@ exports.getSchedule = asyncHandler(async (req, res, next) => {
     // const { id: userId } = req.user
 
 
-    const clusterId  = req.params.clusterId
-    console.log(clusterId)
+    const clusterId = req.params.clusterId
+
     if (!clusterId)
         return next({
             message: 'Vui lòng kiểm tra lại thông tin!',
             statusCode: 400,
         })
     const cluster = await Cluster.findByPk(clusterId)
-    console.log(cluster)
 
     const roomList = await Room.findAll({
         where: {
@@ -112,7 +113,7 @@ const setSchedule = ({ cluster, classroomList = [], roomList = [] }) => {
     crList.map(cr => {
         cr.priority = (cr.numberOfPupils * (cr.dayType === 'full' ? 6 : 3) / cr.learnDay)
         return cr
-    }).sort((a, b) => a.priority - b.priority)
+    }).sort((a, b) => b.priority - a.priority)
 
 
     // set status day
@@ -172,6 +173,13 @@ const handler = (classroomList = [], roomList = []) => {
             ? Math.floor(number / 6) * 7 + number % 6 + bonus
             : Math.floor(number / 3) * 7 + (number % 3) * 2 + bonus
     }
+    const compareDate = (day1, day2) => {
+        const d1 = new Date(day1)
+        const d2 = new Date(day2)
+        console.log(d1)
+        console.log(d2)
+        return d1.getTime() - d2.getTime()
+    }
 
     // handle attach room to class room
     classroomList.forEach(cr => {
@@ -179,10 +187,11 @@ const handler = (classroomList = [], roomList = []) => {
         roomList.forEach(r => {
 
             if (r.roomType === cr.roomType && r.maxPupils >= cr.numberOfPupils) {
-                if (!choosen.length) {
+                if (Object.keys(choosen).length === 0) {
                     choosen = r
                 }
-                if (r[cr.dayType] > choosen[cr.dayType])
+                console.log(compareDate(r[cr.dayType], choosen[cr.dayType]))
+                if (compareDate(choosen[cr.dayType], r[cr.dayType]))
                     choosen = r
             }
         })
@@ -191,8 +200,10 @@ const handler = (classroomList = [], roomList = []) => {
 
         cr.roomName = choosen.name
 
-        if (cr.roomType === 'full') {
+        if (cr.dayType === 'full') {
             choosen.full = cr.finishDay
+            choosen.even = cr.finishDay
+            choosen.odd = cr.finishDay
         } else {
             choosen[cr.dayType] = cr.finishDay
             choosen['full'] = cr.finishDay
