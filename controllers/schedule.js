@@ -40,21 +40,28 @@ exports.createCluster = asyncHandler(async (req, res, next) => {
 })
 
 exports.createRoom = asyncHandler(async (req, res, next) => {
+    req.body.full = req.body.even = req.body.odd = Date()
     const room = await Room.create(req.body)
+    room.clusterId = req.params.clusterId
+
     await room.save()
-    res.status(200).json({ success: true, data: {} })
+    res.status(200).json({ success: true, data: room })
 })
 
 exports.createClass = asyncHandler(async (req, res, next) => {
+
     const rList = await Room.findAll({ where: { clusterId: req.params.clusterId } })
-    const { cr, r } = addClass(req.body, rList)
+    const { cr, choosen: r } = addClass(req.body, rList)
     const c = await Classes.create(cr)
     await c.save()
-    await Room.update({ r, where: { id: r.id } })
+    // await Room.update({ values: { even: r.even, odd: r.even, full: r.full }, where: { id: r.id },  attributes: ['even', 'odd', 'full'] })
+    console.log(r)
+    await Room.update({ even: r.even, odd: r.even, full: r.full }, { where: { id: r.id } })
+
     // classes.beginDay = new Date(classes.beginDay)
     // classes.finishDay = new Date(classes.finishDay)
-    await classes.save()
-    res.status(200).json({ success: true, data: {} })
+    await c.save()
+    res.status(200).json({ success: true, data: c })
 })
 
 
@@ -160,7 +167,7 @@ const handler = (classroomList = [], roomList = []) => {
                 if (Object.keys(choosen).length === 0) {
                     choosen = r
                 }
-                console.log(compareDate(r[cr.dayType], choosen[cr.dayType]))
+                // console.log(compareDate(r[cr.dayType], choosen[cr.dayType]))
                 if (compareDate(choosen[cr.dayType], r[cr.dayType]))
                     choosen = r
             }
@@ -181,7 +188,7 @@ const handler = (classroomList = [], roomList = []) => {
     })
 }
 
-const addClass = (cr, rList) => {
+const addClass = (cr, roomList) => {
 
     let choosen = {}
     roomList.forEach(r => {
@@ -190,7 +197,7 @@ const addClass = (cr, rList) => {
             if (Object.keys(choosen).length === 0) {
                 choosen = r
             }
-            console.log(compareDate(r[cr.dayType], choosen[cr.dayType]))
+            // console.log(compareDate(r[cr.dayType], choosen[cr.dayType]))
             if (compareDate(choosen[cr.dayType], r[cr.dayType]))
                 choosen = r
         }
@@ -242,7 +249,5 @@ const totalDay = (date, type, number) => {
 const compareDate = (day1, day2) => {
     const d1 = new Date(day1)
     const d2 = new Date(day2)
-    console.log(d1)
-    console.log(d2)
     return d1.getTime() - d2.getTime()
 }
