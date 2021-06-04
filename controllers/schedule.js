@@ -41,6 +41,7 @@ exports.createCluster = asyncHandler(async (req, res, next) => {
 
 exports.createRoom = asyncHandler(async (req, res, next) => {
     req.body.full = req.body.even = req.body.odd = Date()
+    console.log(req.body)
     const room = await Room.create(req.body)
     room.clusterId = req.params.clusterId
 
@@ -49,6 +50,7 @@ exports.createRoom = asyncHandler(async (req, res, next) => {
 })
 
 exports.createClass = asyncHandler(async (req, res, next) => {
+    console.log(req.body)
 
     const rList = await Room.findAll({ where: { clusterId: req.params.clusterId } })
     const { cr, choosen: r } = addClass(req.body, rList)
@@ -131,7 +133,7 @@ const setSchedule = ({ cluster, classroomList = [], roomList = [] }) => {
     rList.map(r => {
         r.odd = r.even = r.full = cluster.beginDay
         return r
-    })
+    }).sort((a, b) => a.maxPupils - b.maxPupils)
 
     // // filter big classroom
     // let bigCr = crList.filter(cr => cr.numberOfPupils > 30).sort((a, b) => b.priority - a.priority)

@@ -10,7 +10,7 @@ const sequelize = new Sequelize('postgres://postgres:42717294@localhost:5432/sch
     logging: false,
 });
 
-(async () => sequelize.sync({ force: false }))()
+(async () => sequelize.sync({ force: true }))()
 
 
 
