@@ -57,7 +57,6 @@ exports.createClass = asyncHandler(async (req, res, next) => {
     const c = await Classes.create(cr)
     await c.save()
     // await Room.update({ values: { even: r.even, odd: r.even, full: r.full }, where: { id: r.id },  attributes: ['even', 'odd', 'full'] })
-    console.log(r)
     await Room.update({ even: r.even, odd: r.even, full: r.full }, { where: { id: r.id } })
 
     // classes.beginDay = new Date(classes.beginDay)
@@ -200,6 +199,9 @@ const addClass = (cr, roomList) => {
                 choosen = r
             }
             // console.log(compareDate(r[cr.dayType], choosen[cr.dayType]))
+            console.log(choosen[cr.dayType])
+            console.log('------')
+            console.log(r[cr.dayType])
             if (compareDate(choosen[cr.dayType], r[cr.dayType]))
                 choosen = r
         }
